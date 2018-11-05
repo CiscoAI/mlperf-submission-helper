@@ -22,7 +22,8 @@ def verify_submission(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Verify MLPerf submission.")
-    parser.add_argument("root", help="submission root directory")
+    parser.add_argument("root", metavar="SUBMISSION_ROOT",
+                        help="submission root directory")
     parser.add_argument("--encrypt-key", dest="public_key", default=None,
                         help="public key for encrypting log files")
     parser.add_argument("--encrypt-out", dest="encrypt_out", default=None,
