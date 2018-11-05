@@ -1,0 +1,1 @@
+pycryptodome==v3.7.0
