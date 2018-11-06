@@ -168,7 +168,7 @@ class SubmissionChecks(object):
                 del benchmark_results[0]
                 del benchmark_results[-1]
                 result_val = (float(sum(benchmark_results)) /
-                        len(benchmark_results) / REFERENCE_RESULTS[benchmark_name])
+                        len(benchmark_results - 2) / REFERENCE_RESULTS[benchmark_name])
                 results[entry_name][benchmark_name] = result_val
         self.report.set_results(results)
 
