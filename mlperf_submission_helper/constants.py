@@ -71,6 +71,11 @@ RESULT_ENTRY_META_COLUMNS = [
     "notes"
 ]
 
+DIVISION_COMPLIANCE_CHECK_LEVEL = {
+    "open": 1,
+    "closed": 2
+}
+
 # check result status
 SUCCESS = "success"
 FAILURE = "failure"
