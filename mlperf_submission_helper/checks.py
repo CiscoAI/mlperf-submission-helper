@@ -158,6 +158,11 @@ class SubmissionChecks(object):
                 if not benchmark_results:
                     results[entry_name][benchmark_name] = None
                     continue
+                if not all(benchmark_results):
+                    self.report.add_error("Benchmark results contain None values. " +
+                            "entry: {}, benchmark name: {}".format(entry_name, benchmark_name))
+                    results[entry_name][benchmark_name] = None
+                    continue
                 # special treatment for the NCF results
                 if benchmark_name == "ncf":
                     possible_results = benchmark_results
@@ -175,21 +180,17 @@ class SubmissionChecks(object):
                 results[entry_name][benchmark_name] = result_val
         self.report.set_results(results)
 
-    # we assume project mlp_compliance is in the PYTHONPATH
-    # https://github.com/bitfort/mlp_compliance
+    # use submodule mlp_compliance (https://github.com/bitfort/mlp_compliance)
     def verify_and_extract_time(self, log_file, division):
-        if division == "open":
-            level = "1"
-        elif division == "closed":
-            level = "2"
-        else:
+        level = DIVISION_COMPLIANCE_CHECK_LEVEL.get(division, None)
+        if level is None:
             raise Exception("Unknown division: {}".format(division))
+        mlp_compliance_script = os.path.join(
+                os.path.dirname(__file__), "mlp_compliance/mlp_compliance.py")
         output_str = subprocess.check_output(
-                ["python", "mlp_compliance/mlp_compliance.py", "--level", level, log_file])
+                ["python", mlp_compliance_script, "--level", str(level), log_file])
         success_flag = False
         result_time = None
-        print(log_file)
-        print(output_str)
         for line in output_str.split("\n"):
             if line.startswith("SUCCESS"):
                 success_flag = True
@@ -199,9 +200,3 @@ class SubmissionChecks(object):
             return result_time
         else:
             raise Exception("Result verification failed: {}".format(log_file))
-
-# def verify_and_extract_time(log_file):
-#     value = None
-#     with open(log_file) as f:
-#         value = float(f.readline().strip("\n"))
-#     return value
