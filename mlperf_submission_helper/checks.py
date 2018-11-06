@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 from constants import *
 import report as subm_report
@@ -110,8 +111,10 @@ class SubmissionChecks(object):
                         self.result_meta.setdefault(entry_name, {})
                         self.result_meta[entry_name].setdefault(
                                 result_name, [None for j in range(result_num)])
+                        division = self.result_entry_meta[entry_name].get("division")
                         self.result_meta[entry_name][result_name][i] = \
-                                verify_and_extract_time(os.path.join(result_dir, log_file_name))
+                                self.verify_and_extract_time(
+                                os.path.join(result_dir, log_file_name), division)
         except Exception as e:
             self.report.add_error("Unable to verify results dir: {}".format(str(e)))
 
@@ -172,9 +175,33 @@ class SubmissionChecks(object):
                 results[entry_name][benchmark_name] = result_val
         self.report.set_results(results)
 
+    # we assume project mlp_compliance is in the PYTHONPATH
+    # https://github.com/bitfort/mlp_compliance
+    def verify_and_extract_time(self, log_file, division):
+        if division == "open":
+            level = "1"
+        elif division == "closed":
+            level = "2"
+        else:
+            raise Exception("Unknown division: {}".format(division))
+        output_str = subprocess.check_output(
+                ["python", "mlp_compliance/mlp_compliance.py", "--level", level, log_file])
+        success_flag = False
+        result_time = None
+        print(log_file)
+        print(output_str)
+        for line in output_str.split("\n"):
+            if line.startswith("SUCCESS"):
+                success_flag = True
+            if line.startswith("Measured time:"):
+                result_time = float(line.lstrip("Measured time:").strip())
+        if success_flag and result_time is not None:
+            return result_time
+        else:
+            raise Exception("Result verification failed: {}".format(log_file))
 
-def verify_and_extract_time(log_file):
-    value = None
-    with open(log_file) as f:
-        value = float(f.readline().strip("\n"))
-    return value
+# def verify_and_extract_time(log_file):
+#     value = None
+#     with open(log_file) as f:
+#         value = float(f.readline().strip("\n"))
+#     return value
